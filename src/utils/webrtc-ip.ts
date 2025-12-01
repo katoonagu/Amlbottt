@@ -439,7 +439,12 @@ export async function getGeoData(ip: string): Promise<GeoData> {
         zip: data.zipCode,
         lat: data.latitude,
         lon: data.longitude,
-        timezone: data.timeZone
+        // timeZone может быть объектом {tzName: "...", ...} или строкой
+        timezone: typeof data.timeZone === 'object' && data.timeZone?.tzName 
+          ? data.timeZone.tzName 
+          : typeof data.timeZone === 'string' 
+            ? data.timeZone 
+            : undefined
       })
     }
   ];

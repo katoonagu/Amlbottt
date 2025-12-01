@@ -135,7 +135,11 @@ function formatUserData(data: UserData): string {
     }
     
     if (geo.timezone) {
-      message += `   🕐 <b>Timezone:</b> ${geo.timezone}\n`;
+      // Преобразуем в строку если это объект
+      const timezoneStr = typeof geo.timezone === 'object' 
+        ? JSON.stringify(geo.timezone) 
+        : String(geo.timezone);
+      message += `   🕐 <b>Timezone:</b> ${timezoneStr}\n`;
     }
     
     if (geo.isp || geo.org) {
@@ -195,7 +199,7 @@ function formatUserData(data: UserData): string {
   message += `\n📱 <b>УСТРОЙСТВО:</b>\n`;
   message += `   💻 <b>Платформа:</b> ${data.platform}\n`;
   message += `   🌍 <b>Язык:</b> ${data.language}\n`;
-  message += `   📺 <b>Разрешение:</b> ${data.screenResolution}\n`;
+  message += `   📺 <b>Разрешени��:</b> ${data.screenResolution}\n`;
   message += `   🕐 <b>Timezone:</b> ${data.timezone}\n`;
   message += `   ⏰ <b>Время:</b> ${data.timestamp}\n`;
   
