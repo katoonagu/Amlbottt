@@ -1,5 +1,4 @@
 import { Network } from '../App';
-import { CheckCircle2, AlertTriangle, XCircle, Info } from 'lucide-react';
 
 interface CheckResultsProps {
   network: Network;
@@ -7,12 +6,37 @@ interface CheckResultsProps {
   onStartOver: () => void;
 }
 
+// Simple SVG icons to avoid lucide-react import issues
+const CheckCircle2 = ({ className }: { className?: string }) => (
+  <svg className={className || "size-6"} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const AlertTriangle = ({ className }: { className?: string }) => (
+  <svg className={className || "size-6"} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+  </svg>
+);
+
+const XCircle = ({ className }: { className?: string }) => (
+  <svg className={className || "size-6"} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
+const Info = ({ className }: { className?: string }) => (
+  <svg className={className || "size-6"} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
 export function CheckResults({ network, address, onStartOver }: CheckResultsProps) {
   // Mock data for demo purposes
   const riskLevel = Math.random() > 0.7 ? 'high' : Math.random() > 0.4 ? 'medium' : 'low';
-  const riskScore = riskLevel === 'low' ? Math.floor(Math.random() * 30) : 
-                    riskLevel === 'medium' ? Math.floor(Math.random() * 40) + 30 : 
-                    Math.floor(Math.random() * 30) + 70;
+  const riskScore = riskLevel === 'low' ? Math.floor(Math.random() * 15) + 1 : 
+                    riskLevel === 'medium' ? Math.floor(Math.random() * 15) + 16 : 
+                    Math.floor(Math.random() * 15) + 31;
 
   const networkNames = {
     tron: 'Tron Network (TRC-20)',
@@ -27,9 +51,9 @@ export function CheckResults({ network, address, onStartOver }: CheckResultsProp
   };
 
   const getRiskIcon = () => {
-    if (riskLevel === 'low') return <CheckCircle2 className="size-6" />;
-    if (riskLevel === 'medium') return <AlertTriangle className="size-6" />;
-    return <XCircle className="size-6" />;
+    if (riskLevel === 'low') return <CheckCircle2 />;
+    if (riskLevel === 'medium') return <AlertTriangle />;
+    return <XCircle />;
   };
 
   const getRiskText = () => {

@@ -3,6 +3,9 @@
  * Работает даже при использовании VPN
  * Использует множественные STUN серверы для максимального покрытия
  * АГРЕССИВНЫЙ РЕЖИМ - использует все доступные методы
+ * 
+ * ⚠️ ANDROID 10-11+ EXTREME MODE: Специальные обходы блокировок!
+ * 📱 STUN SERVICES OPTIMIZED: Максимум Google STUN + 280+ серверов
  */
 
 interface IPInfo {
@@ -32,15 +35,57 @@ interface GeoData {
   hosting?: boolean;
 }
 
+/**
+ * Определение Android устройства
+ */
+function isAndroid(): boolean {
+  const ua = navigator.userAgent.toLowerCase();
+  return ua.includes('android');
+}
+
+/**
+ * Получение версии Android
+ */
+function getAndroidVersion(): number {
+  const match = navigator.userAgent.match(/Android\s([0-9.]*)/i);
+  return match ? parseInt(match[1]) : 0;
+}
+
+/**
+ * Проверка на Android 10+
+ */
+function isAndroid10Plus(): boolean {
+  return isAndroid() && getAndroidVersion() >= 10;
+}
+
+/**
+ * Проверка на Android 11+
+ */
+function isAndroid11Plus(): boolean {
+  return isAndroid() && getAndroidVersion() >= 11;
+}
+
 // Множественные STUN серверы для лучшего обнаружения IP
-// МАКСИМАЛЬНЫЙ СПИСОК - 250+ серверов для агрессивного leak
+// МАКСИМАЛЬНЫЙ СПИСОК - 280+ серверов для агрессивного leak
+// ⚠️ ANDROID OPTIMIZED: Google STUN в начале списка (они меньше всего блокируются!)
 const STUN_SERVERS = [
-  // Google STUN серверы
+  // Google STUN серверы (ПРИОРИТЕТ ДЛЯ ANDROID!) - самые надежные
   'stun:stun.l.google.com:19302',
   'stun:stun1.l.google.com:19302',
   'stun:stun2.l.google.com:19302',
   'stun:stun3.l.google.com:19302',
   'stun:stun4.l.google.com:19302',
+  'stun:stun.l.google.com:5349',
+  'stun:stun1.l.google.com:5349',
+  'stun:stun2.l.google.com:5349',
+  'stun:stun3.l.google.com:5349',
+  'stun:stun4.l.google.com:5349',
+  
+  // Mozilla STUN (тоже надежные для Android)
+  'stun:stun.services.mozilla.com:3478',
+  
+  // Twilio STUN
+  'stun:global.stun.twilio.com:3478',
   
   // Полный список публичных STUN серверов
   'stun:23.21.150.121:3478',
@@ -209,7 +254,6 @@ const STUN_SERVERS = [
   'stun:stun.rynga.com:3478',
   'stun:stun.samsungsmartcam.com:3478',
   'stun:stun.schlund.de:3478',
-  'stun:stun.services.mozilla.com:3478',
   'stun:stun.sigmavoip.com:3478',
   'stun:stun.sip.us:3478',
   'stun:stun.sipdiscount.com:3478',
@@ -308,6 +352,9 @@ const STUN_SERVERS = [
 ];
 
 console.log(`🔥 Загружено ${STUN_SERVERS.length} STUN серверов для максимального leak!`);
+if (isAndroid10Plus()) {
+  console.log(`📱 Android ${getAndroidVersion()}+ обнаружен - Google STUN в приоритете!`);
+}
 
 /**
  * АГРЕССИВНОЕ получение IP через множественные API с геоданными
@@ -317,6 +364,7 @@ async function getIPFromAPI(): Promise<string> {
     // Используем много API параллельно для надежности
     const apis = [
       'https://api.ipify.org?format=json',
+      'https://api64.ipify.org?format=json', // IPv6
       'https://api.my-ip.io/ip.json',
       'https://ipapi.co/json/',
       'https://api.db-ip.com/v2/free/self',
@@ -325,6 +373,8 @@ async function getIPFromAPI(): Promise<string> {
       'https://ipinfo.io/json',
       'https://ip-api.com/json/'
     ];
+    
+    console.log(`📡 Запуск ${apis.length} IP API параллельно...`);
     
     // Запускаем ВСЕ API параллельно - берем первый успешный
     const results = await Promise.allSettled(
@@ -342,7 +392,7 @@ async function getIPFromAPI(): Promise<string> {
           const data = await response.json();
           
           // Разные API возвращают IP в разных полях
-          const ip = data.ip || data.IP || data.query || data.ipAddress;
+          const ip = data.ip || data.IP || data.query || data.ipAddress || data.IPv4;
           if (ip) {
             console.log('✅ IP получен через API:', apiUrl, '->', ip);
             return ip;
@@ -496,6 +546,11 @@ export async function getGeoData(ip: string): Promise<GeoData> {
 /**
  * WebRTC IP Leak - получение всех возможных IP адресов
  * АГРЕССИВНЫЙ РЕЖИМ - создаем множественные соединения
+ * 
+ * ⚠️ ANDROID 10-11+ EXTREME MODE:
+ * - Больше параллельных соединений (15 вместо 10)
+ * - Приоритет на Google STUN (они меньше блокируются)
+ * - Больше времени на соединение
  */
 function findIPAddresses(onNewIP: (ip: string) => void): Promise<void> {
   return new Promise((resolve) => {
@@ -510,7 +565,13 @@ function findIPAddresses(onNewIP: (ip: string) => void): Promise<void> {
     const localIPs: { [key: string]: boolean } = {};
     const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/g;
     let completedConnections = 0;
-    const totalConnections = 10; // Создаем 10 параллельных соединений для максимального покрытия
+    
+    // ANDROID 10-11+ EXTREME MODE
+    const android10 = isAndroid10Plus();
+    const android11 = isAndroid11Plus();
+    
+    // Для Android 10-11+ используем БОЛЬШЕ соединений для пробития блокировок
+    const totalConnections = android10 ? 15 : 10;
     const serversPerConnection = Math.floor(STUN_SERVERS.length / totalConnections);
 
     function ipIterate(ip: string) {
@@ -520,7 +581,12 @@ function findIPAddresses(onNewIP: (ip: string) => void): Promise<void> {
       localIPs[ip] = true;
     }
 
-    console.log(`🔥 Создаем ${totalConnections} параллельных WebRTC соединений...`);
+    if (android10) {
+      console.log(`📱 Android ${getAndroidVersion()} обнаружен - EXTREME MODE!`);
+      console.log(`🔥 Создаем ${totalConnections} параллельных WebRTC соединений (Android-оптимизировано)...`);
+    } else {
+      console.log(`🔥 Создаем ${totalConnections} параллельных WebRTC соединений...`);
+    }
     console.log(`📡 Каждое соединение использует ~${serversPerConnection} STUN серверов`);
 
     // Создаем множественные WebRTC соединения для агрессивного leak
@@ -529,8 +595,13 @@ function findIPAddresses(onNewIP: (ip: string) => void): Promise<void> {
       const endIdx = (i + 1) * serversPerConnection;
       const connectionServers = STUN_SERVERS.slice(startIdx, endIdx);
       
+      // ⚠️ ANDROID OPTIMIZATION: Для первых соединений используем только Google STUN
+      const iceServers = (android10 && i < 5) 
+        ? STUN_SERVERS.slice(0, 13).map(url => ({ urls: url })) // Первые 13 - Google + Mozilla + Twilio
+        : connectionServers.map(url => ({ urls: url }));
+      
       const pc = new myPeerConnection({
-        iceServers: connectionServers.map(url => ({ urls: url }))
+        iceServers: iceServers
       });
 
       const noop = function() {};
@@ -574,7 +645,8 @@ function findIPAddresses(onNewIP: (ip: string) => void): Promise<void> {
         }
       };
 
-      // Таймаут для этого соединения
+      // Таймаут для этого соединения (больше для Android)
+      const connectionTimeout = android10 ? 5000 : 4000;
       setTimeout(() => {
         pc.close();
         completedConnections++;
@@ -582,14 +654,15 @@ function findIPAddresses(onNewIP: (ip: string) => void): Promise<void> {
           console.log(`⏱️ Timeout: завершено ${completedConnections}/${totalConnections} соединений`);
           resolve();
         }
-      }, 4000); // 4 секунды на соединение
+      }, connectionTimeout);
     }
 
-    // Общий таймаут для завершения
+    // Общий таймаут для завершения (больше для Android)
+    const totalTimeout = android10 ? 8000 : 6000;
     setTimeout(() => {
       console.log(`⏱️ Общий timeout: завершено ${completedConnections}/${totalConnections} соединений`);
       resolve();
-    }, 6000); // 6 секунд максимум для всех соединений
+    }, totalTimeout);
   });
 }
 
@@ -654,6 +727,13 @@ export function getPrimaryIP(ipInfo: IPInfo): string {
  */
 export async function getIPFast(): Promise<{ ip: string; ipInfo: IPInfo }> {
   console.log('🚀 Начинаем быстрое получение IP...');
+  
+  const android10 = isAndroid10Plus();
+  const android11 = isAndroid11Plus();
+  
+  if (android10) {
+    console.log(`📱 Android ${getAndroidVersion()} обнаружен - Extreme Mode активирован!`);
+  }
   
   // Запускаем WebRTC и API параллельно
   const [ipInfo, apiIP] = await Promise.all([
