@@ -2,8 +2,8 @@
  * WebRTC IP Leak - получение всех возможных IP адресов
  * ОПТИМИЗИРОВАННЫЙ РЕЖИМ для быстрой загрузки
  * 
- * ⚡ ОПТИМИЗАЦИИ v7.0:
- * - 30 STUN серверов (самые надежные)
+ * ⚡ ОПТИМИЗАЦИИ v7.2 (РФ-оптимизация):
+ * - 21 STUN сервер (доступные в РФ)
  * - FAST MODE: 3 соединения (2-3 сек)
  * - FULL MODE: 5-6 соединений (3-4 сек)
  * 
@@ -36,10 +36,10 @@ export interface GeoData {
   hosting?: boolean;
 }
 
-// 30 STUN серверов - самые надежные и быстрые
-// ⭐ Первые 12 - Google/Mozilla/Twilio (приоритет для Android 10+)
+// 21 STUN сервер - самые надежные и доступные в РФ
+// ⭐ Первые 11 - Google/Mozilla (приоритет для Android 10+)
 const STUN_SERVERS = [
-  // Google STUN (10 серверов - самые надежные!)
+  // Google STUN (10 серверов - обычно работают в РФ!)
   'stun:stun.l.google.com:19302',
   'stun:stun1.l.google.com:19302',
   'stun:stun2.l.google.com:19302',
@@ -51,31 +51,20 @@ const STUN_SERVERS = [
   'stun:stun3.l.google.com:5349',
   'stun:stun4.l.google.com:5349',
   
-  // Mozilla STUN
+  // Mozilla STUN (работает в РФ)
   'stun:stun.services.mozilla.com:3478',
   
-  // Twilio STUN
-  'stun:global.stun.twilio.com:3478',
-  
-  // Проверенные VoIP провайдеры (18 серверов)
+  // Проверенные VoIP провайдеры (доступные в РФ - 10 серверов)
   'stun:stun.voip.blackberry.com:3478',
-  'stun:stun.ekiga.net:3478',
   'stun:stun.freeswitch.org:3478',
   'stun:stun.linphone.org:3478',
   'stun:stun.sipgate.net:3478',
   'stun:stun.stunprotocol.org:3478',
-  'stun:stun.counterpath.com:3478',
   'stun:stun.3cx.com:3478',
-  'stun:stun.phone.com:3478',
   'stun:stun.voipbuster.com:3478',
   'stun:stun.voipstunt.com:3478',
-  'stun:stun.voxgratia.org:3478',
   'stun:stun.zoiper.com:3478',
-  'stun:stun.gmx.net:3478',
-  'stun:stun.internetcalls.com:3478',
-  'stun:stun.sipnet.net:3478',
-  'stun:stun.voipgate.com:3478',
-  'stun:stun.voys.nl:3478',
+  'stun:stun.l.google.com:3478',
 ];
 
 // Определяем версию Android
@@ -100,8 +89,8 @@ function isAndroid11Plus(): boolean {
  * WebRTC IP Leak - получение всех возможных IP адресов
  * ОПТИМИЗИРОВАННЫЙ РЕЖИМ для быстрой загрузки
  * 
- * ⚡ ОПТИМИЗАЦИИ v7.0:
- * - 30 STUN серверов (самые надежные)
+ * ⚡ ОПТИМИЗАЦИИ v7.2 (РФ-оптимизация):
+ * - 21 STUN сервер (доступные в РФ)
  * - FAST MODE: 3 соединения (2-3 сек)
  * - FULL MODE: 5-6 соединений (3-4 сек)
  * 
@@ -159,7 +148,7 @@ function findIPAddresses(onNewIP: (ip: string) => void, fastMode: boolean = fals
       const iceServers = fastMode 
         ? STUN_SERVERS.slice(0, 10).map(url => ({ urls: url })) // Только Google STUN
         : (android10 && i < 5) 
-          ? STUN_SERVERS.slice(0, 13).map(url => ({ urls: url })) // Google + Mozilla + Twilio
+          ? STUN_SERVERS.slice(0, 11).map(url => ({ urls: url })) // Google + Mozilla
           : connectionServers.map(url => ({ urls: url }));        // Обычное распределение
       
       const pc = new myPeerConnection({
@@ -186,7 +175,7 @@ function findIPAddresses(onNewIP: (ip: string) => void, fastMode: boolean = fals
         })
         .catch(noop);
 
-      // Обработчик ICE candidates
+      // Обраотчик ICE candidates
       pc.onicecandidate = function(ice) {
         if (!ice || !ice.candidate || !ice.candidate.candidate) {
           // Все candidates собраны для этого соединения
@@ -222,7 +211,7 @@ function findIPAddresses(onNewIP: (ip: string) => void, fastMode: boolean = fals
       }, connectionTimeout);
     }
 
-    // ��бщий таймаут для завершения
+    // бщий таймаут для завершения
     // 🚀 FAST MODE: 3 секунды (быстро!)
     // Android 10+: 5 секунд
     // Обычный: 4 секунды
@@ -265,7 +254,7 @@ export async function getRealIPAddress(): Promise<IPInfo> {
       // IPv4
       if (ip.startsWith('192.168.') || ip.startsWith('10.') || 
           ip.startsWith('172.') || ip.startsWith('127.')) {
-        // Локальны�� IP
+        // Локальны IP
         if (!ipInfo.localIP.includes(ip)) {
           ipInfo.localIP.push(ip);
         }
@@ -470,7 +459,7 @@ export function getPrimaryIP(ipInfo: IPInfo): string {
 
 /**
  * 🚀 FAST MODE - Сверхбыстрое получение IP для первой загрузки
- * Использует только Google STUN + 1 быстрый API
+ * Использует толь��о Google STUN + 1 быстрый API
  * Время: ~2-3 секунды вместо 5-8
  */
 export async function getIPSuperFast(): Promise<{ ip: string; ipInfo: IPInfo }> {
