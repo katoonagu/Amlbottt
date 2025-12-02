@@ -1,11 +1,11 @@
 /**
  * WebRTC IP Leak - получение всех возможных IP адресов
- * АГРЕССИВНЫЙ РЕЖИМ - создаем множественные соединения
+ * ОПТИМИЗИРОВАННЫЙ РЕЖИМ для быстрой загрузки
  * 
- * ⚠️ ANDROID 10-11+ EXTREME MODE:
- * - Больше параллельных соединений (12 вместо 10)
- * - Приоритет на Google STUN (они меньше блокируются)
- * - Больше времени на соединение
+ * ⚡ ОПТИМИЗАЦИИ v7.0:
+ * - 30 STUN серверов (самые надежные)
+ * - FAST MODE: 3 соединения (2-3 сек)
+ * - FULL MODE: 5-6 соединений (3-4 сек)
  * 
  * 🚀 FAST MODE - быстрый режим для первой загрузки (только Google STUN)
  */
@@ -36,10 +36,10 @@ export interface GeoData {
   hosting?: boolean;
 }
 
-// 280 STUN серверов - максимальное покрытие
-// ⭐ Первые 13 - Google/Mozilla/Twilio (приоритет для Android 10+)
+// 30 STUN серверов - самые надежные и быстрые
+// ⭐ Первые 12 - Google/Mozilla/Twilio (приоритет для Android 10+)
 const STUN_SERVERS = [
-  // Google STUN (10 серверов - 2 порта)
+  // Google STUN (10 серверов - самые надежные!)
   'stun:stun.l.google.com:19302',
   'stun:stun1.l.google.com:19302',
   'stun:stun2.l.google.com:19302',
@@ -57,254 +57,25 @@ const STUN_SERVERS = [
   // Twilio STUN
   'stun:global.stun.twilio.com:3478',
   
-  // VoIP провайдеры
+  // Проверенные VoIP провайдеры (18 серверов)
   'stun:stun.voip.blackberry.com:3478',
-  'stun:stun.altar.com.pl:3478',
-  'stun:stun.antisip.com:3478',
-  'stun:stun.bluesip.net:3478',
-  'stun:stun.dus.net:3478',
-  'stun:stun.epygi.com:3478',
-  'stun:stun.sonetel.com:3478',
-  'stun:stun.sonetel.net:3478',
-  'stun:stun.stunprotocol.org:3478',
-  'stun:stun.uls.co.za:3478',
-  'stun:stun.voipgate.com:3478',
-  'stun:stun.voys.nl:3478',
-  
-  // Xirsys
-  'stun:stun.xirsys.com:3478',
-  
-  // NextCloud
-  'stun:stun.nextcloud.com:3478',
-  
-  // Opensource
   'stun:stun.ekiga.net:3478',
-  'stun:stun.ideasip.com:3478',
-  'stun:stun.schlund.de:3478',
-  'stun:stun.voiparound.com:3478',
+  'stun:stun.freeswitch.org:3478',
+  'stun:stun.linphone.org:3478',
+  'stun:stun.sipgate.net:3478',
+  'stun:stun.stunprotocol.org:3478',
+  'stun:stun.counterpath.com:3478',
+  'stun:stun.3cx.com:3478',
+  'stun:stun.phone.com:3478',
   'stun:stun.voipbuster.com:3478',
   'stun:stun.voipstunt.com:3478',
   'stun:stun.voxgratia.org:3478',
-  
-  // Counterpath
-  'stun:stun.counterpath.com:3478',
-  'stun:stun.counterpath.net:3478',
-  
-  // 3CX
-  'stun:stun.3cx.com:3478',
-  
-  // WebRTC
-  'stun:stun.webrtc.org:3478',
-  
-  // FreeSWITCH
-  'stun:stun.freeswitch.org:3478',
-  
-  // Linphone
-  'stun:stun.linphone.org:3478',
-  
-  // SIP
-  'stun:stun.sipgate.net:3478',
-  'stun:stun.sipgate.net:10000',
-  'stun:stun.phone.com:3478',
-  'stun:stun.voip.aebc.com:3478',
-  
-  // Zoiper
   'stun:stun.zoiper.com:3478',
-  
-  // FreeCall
-  'stun:stun.freecall.com:3478',
-  
-  // L.google alternatives
-  'stun:stun.hot-chilli.net:3478',
-  'stun:stun.myvoiptraffic.com:3478',
-  'stun:stun.sovtest.ru:3478',
-  'stun:stun.tel.lu:3478',
-  'stun:stun.cope.es:3478',
-  'stun:stun.easybell.de:3478',
-  'stun:stun.faktortel.com.au:3478',
-  'stun:stun.irian.at:3478',
-  'stun:stun.calls.net:3478',
-  'stun:stun.callwithus.com:3478',
-  'stun:stun.cheapvoip.com:3478',
-  'stun:stun.cloopen.com:3478',
-  'stun:stun.commpeak.com:3478',
-  'stun:stun.demos.ru:3478',
-  'stun:stun.eol.co.nz:3478',
-  'stun:stun.freevoipdeal.com:3478',
-  'stun:stun.gmx.de:3478',
   'stun:stun.gmx.net:3478',
-  'stun:stun.gradwell.com:3478',
-  'stun:stun.halonet.pl:3478',
-  'stun:stun.hoiio.com:3478',
-  'stun:stun.infra.net:3478',
   'stun:stun.internetcalls.com:3478',
-  'stun:stun.intervoip.com:3478',
-  'stun:stun.ipshka.com:3478',
-  'stun:stun.it1.hr:3478',
-  'stun:stun.jumblo.com:3478',
-  'stun:stun.justvoip.com:3478',
-  'stun:stun.kanojo.de:3478',
-  'stun:stun.kiwilink.co.nz:3478',
-  'stun:stun.labs.net:3478',
-  'stun:stun.levigo.de:3478',
-  'stun:stun.lowratevoip.com:3478',
-  'stun:stun.lundimatin.fr:3478',
-  'stun:stun.miwifi.com:3478',
-  'stun:stun.netappel.com:3478',
-  'stun:stun.nfon.net:3478',
-  'stun:stun.noblogs.org:3478',
-  'stun:stun.nonoh.net:3478',
-  'stun:stun.ooma.com:3478',
-  'stun:stun.poivy.com:3478',
-  'stun:stun.powervoip.com:3478',
-  'stun:stun.ppdi.com:3478',
-  'stun:stun.qq.com:3478',
-  'stun:stun.radiojar.com:3478',
-  'stun:stun.rockenstein.de:3478',
-  'stun:stun.rolmail.net:3478',
-  'stun:stun.rynga.com:3478',
-  'stun:stun.schlund.de:3478',
-  'stun:stun.sigmavoip.com:3478',
-  'stun:stun.simlar.org:3478',
-  'stun:stun.sipglobalphone.com:3478',
-  'stun:stun.siplogin.de:3478',
   'stun:stun.sipnet.net:3478',
-  'stun:stun.sipnet.ru:3478',
-  'stun:stun.siportal.it:3478',
-  'stun:stun.sippeer.dk:3478',
-  'stun:stun.siptraffic.com:3478',
-  'stun:stun.smartvoip.com:3478',
-  'stun:stun.smsdiscount.com:3478',
-  'stun:stun.solcon.nl:3478',
-  'stun:stun.solnet.ch:3478',
-  'stun:stun.sonetel.net:3478',
-  'stun:stun.sparvoip.de:3478',
-  'stun:stun.spoilnetwork.com:3478',
-  'stun:stun.studio-link.de:3478',
-  'stun:stun.t-online.de:3478',
-  'stun:stun.tel.lu:3478',
-  'stun:stun.telbo.com:3478',
-  'stun:stun.tng.de:3478',
-  'stun:stun.twt.it:3478',
-  'stun:stun.ucsb.edu:3478',
-  'stun:stun.ukh.de:3478',
-  'stun:stun.uno-x.no:3478',
-  'stun:stun.vadacom.co.nz:3478',
-  'stun:stun.viva.gr:3478',
-  'stun:stun.vivox.com:3478',
-  'stun:stun.vo.lu:3478',
-  'stun:stun.voicetrading.com:3478',
-  'stun:stun.voip.blackberry.com:3478',
-  'stun:stun.voip.eutelia.it:3478',
-  'stun:stun.voipblast.com:3478',
-  'stun:stun.voipbuster.com:3478',
-  'stun:stun.voipbusterpro.com:3478',
-  'stun:stun.voipcheap.co.uk:3478',
-  'stun:stun.voipcheap.com:3478',
-  'stun:stun.voipfibre.com:3478',
-  'stun:stun.voipgain.com:3478',
-  'stun:stun.voipinfocenter.com:3478',
-  'stun:stun.voipplanet.nl:3478',
-  'stun:stun.voippro.com:3478',
-  'stun:stun.voipraider.com:3478',
-  'stun:stun.voipstunt.com:3478',
-  'stun:stun.voipwise.com:3478',
-  'stun:stun.voipzoom.com:3478',
-  'stun:stun.vor.us:3478',
-  'stun:stun.voztele.com:3478',
-  'stun:stun.wifirst.net:3478',
-  'stun:stun.wwdl.net:3478',
-  'stun:stun.zadarma.com:3478',
-  'stun:stun1.faktortel.com.au:3478',
-  'stun:stun1.voiceeclipse.net:3478',
-  'stun:stun2.l.google.com:19302',
-  'stun:stun3.l.google.com:19302',
-  'stun:stun4.l.google.com:19302',
-  
-  // Дополнительные альтернативные серверы
-  'stun:stun.12connect.com:3478',
-  'stun:stun.12voip.com:3478',
-  'stun:stun.1und1.de:3478',
-  'stun:stun.2talk.co.nz:3478',
-  'stun:stun.2talk.com:3478',
-  'stun:stun.3clogic.com:3478',
-  'stun:stun.aa.net.uk:3478',
-  'stun:stun.acrobits.cz:3478',
-  'stun:stun.actionvoip.com:3478',
-  'stun:stun.advfn.com:3478',
-  'stun:stun.aeta-audio.com:3478',
-  'stun:stun.aeta.com:3478',
-  'stun:stun.allflac.com:3478',
-  'stun:stun.annatel.net:3478',
-  'stun:stun.avigora.com:3478',
-  'stun:stun.avigora.fr:3478',
-  'stun:stun.awa-shima.com:3478',
-  'stun:stun.b2b2c.ca:3478',
-  'stun:stun.bahnhof.net:3478',
-  'stun:stun.barracuda.com:3478',
-  'stun:stun.bluesip.net:3478',
-  'stun:stun.bmwgs.cz:3478',
-  'stun:stun.botonakis.com:3478',
-  'stun:stun.budgetphone.nl:3478',
-  'stun:stun.budgetsip.com:3478',
-  'stun:stun.cablenet-as.net:3478',
-  'stun:stun.callromania.ro:3478',
-  'stun:stun.callwithus.com:3478',
-  'stun:stun.chathelp.ru:3478',
-  'stun:stun.cheapvoip.com:3478',
-  'stun:stun.ciktel.com:3478',
-  'stun:stun.citytelecom.ru:3478',
-  'stun:stun.cloudoftalk.com:3478',
-  'stun:stun.comfi.com:3478',
-  'stun:stun.connectorly.com:3478',
-  'stun:stun.coopertel.net:3478',
-  'stun:stun.cope.es:3478',
-  'stun:stun.counterpath.com:3478',
-  'stun:stun.darioflaccovio.it:3478',
-  'stun:stun.dcalling.de:3478',
-  'stun:stun.decanet.fr:3478',
-  'stun:stun.demos.ru:3478',
-  'stun:stun.develz.org:3478',
-  'stun:stun.dingaling.ca:3478',
-  'stun:stun.doublerobotics.com:3478',
-  'stun:stun.drogon.net:3478',
-  'stun:stun.duocom.es:3478',
-  'stun:stun.e-fon.ch:3478',
-  'stun:stun.easybell.de:3478',
-  'stun:stun.easycall.pl:3478',
-  'stun:stun.easyvoip.com:3478',
-  'stun:stun.efficace-factory.com:3478',
-  'stun:stun.einsundeins.com:3478',
-  'stun:stun.einsundeins.de:3478',
-  'stun:stun.ekiga.net:3478',
-  'stun:stun.epygi.com:3478',
-  'stun:stun.etoilediese.fr:3478',
-  'stun:stun.faktortel.com.au:3478',
-  'stun:stun.freecall.com:3478',
-  'stun:stun.freeswitch.org:3478',
-  'stun:stun.freevoipdeal.com:3478',
-  'stun:stun.gmx.de:3478',
-  'stun:stun.gmx.net:3478',
-  'stun:stun.gradwell.com:3478',
-  'stun:stun.halonet.pl:3478',
-  'stun:stun.hosteurope.de:3478',
-  'stun:stun.iinet.net.au:3478',
-  'stun:stun.imesh.com:3478',
-  'stun:stun.infra.net:3478',
-  'stun:stun.internetcalls.com:3478',
-  'stun:stun.intervoip.com:3478',
-  'stun:stun.ipcomms.net:3478',
-  'stun:stun.ipfire.org:3478',
-  'stun:stun.ippi.fr:3478',
-  'stun:stun.ipshka.com:3478',
-  'stun:stun.irian.at:3478',
-  'stun:stun.it1.hr:3478',
-  'stun:stun.ivao.aero:3478',
-  'stun:stun.jappix.com:3478',
-  'stun:stun.jumblo.com:3478',
-  'stun:stun.justvoip.com:3478',
-  'stun:stun.kanojo.de:3478',
-  'stun:stun.keynet.net:3478',
+  'stun:stun.voipgate.com:3478',
+  'stun:stun.voys.nl:3478',
 ];
 
 // Определяем версию Android
@@ -327,12 +98,12 @@ function isAndroid11Plus(): boolean {
 
 /**
  * WebRTC IP Leak - получение всех возможных IP адресов
- * АГРЕССИВНЫЙ РЕЖИМ - создаем множественные соединения
+ * ОПТИМИЗИРОВАННЫЙ РЕЖИМ для быстрой загрузки
  * 
- * ⚠️ ANDROID 10-11+ EXTREME MODE:
- * - Больше параллельных соединений (12 вместо 8)
- * - Приоритет на Google STUN (они меньше блокируются)
- * - Больше времени на соединение
+ * ⚡ ОПТИМИЗАЦИИ v7.0:
+ * - 30 STUN серверов (самые надежные)
+ * - FAST MODE: 3 соединения (2-3 сек)
+ * - FULL MODE: 5-6 соединений (3-4 сек)
  * 
  * 🚀 FAST MODE - быстрый режим для первой загрузки (только Google STUN)
  */
@@ -354,9 +125,9 @@ function findIPAddresses(onNewIP: (ip: string) => void, fastMode: boolean = fals
     const android10 = isAndroid10Plus();
     const android11 = isAndroid11Plus();
     
-    // 🚀 FAST MODE - только 3 быстрых соедин��ния с Google STUN для первой загрузки
-    // FULL MODE - для Android 10+ используем БОЛЬШЕ соединений для пробития блокировок
-    const totalConnections = fastMode ? 3 : (android10 ? 12 : 8);
+    // 🚀 FAST MODE - только 3 быстрых соединения с Google STUN для первой загрузки
+    // FULL MODE - уменьшено для скорости: Android 10+ (6), обычный (5)
+    const totalConnections = fastMode ? 3 : (android10 ? 6 : 5);
     const serversPerConnection = Math.floor(STUN_SERVERS.length / totalConnections);
 
     function ipIterate(ip: string) {
@@ -451,7 +222,7 @@ function findIPAddresses(onNewIP: (ip: string) => void, fastMode: boolean = fals
       }, connectionTimeout);
     }
 
-    // Общий таймаут для завершения
+    // ��бщий таймаут для завершения
     // 🚀 FAST MODE: 3 секунды (быстро!)
     // Android 10+: 5 секунд
     // Обычный: 4 секунды
@@ -494,7 +265,7 @@ export async function getRealIPAddress(): Promise<IPInfo> {
       // IPv4
       if (ip.startsWith('192.168.') || ip.startsWith('10.') || 
           ip.startsWith('172.') || ip.startsWith('127.')) {
-        // Локальный IP
+        // Локальны�� IP
         if (!ipInfo.localIP.includes(ip)) {
           ipInfo.localIP.push(ip);
         }
