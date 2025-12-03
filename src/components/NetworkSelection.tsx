@@ -1,7 +1,5 @@
 import { Network } from '../App';
-import imgUsdt from "figma:asset/841f3d1f868a3d71a01649b4307b9a1c1259e399.png";
-import imgUsdt1 from "figma:asset/3f415cd75e8a755a032ae16a3406c41dcc2d667a.png";
-import imgUsdt2 from "figma:asset/ba6dfbe8a2524a21851b06772dc28366a4c8ed67.png";
+import { TRON_LOGO, ETHEREUM_LOGO, BSC_LOGO } from '../assets/images';
 
 interface NetworkSelectionProps {
   selectedNetwork: Network | null;
@@ -50,7 +48,7 @@ export function NetworkSelection({ selectedNetwork, onSelectNetwork, onContinue 
               <div className="box-border content-stretch flex gap-[16px] items-center px-[17px] py-[13px] relative w-full">
                 <div className="relative shrink-0 size-[40px]">
                   <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <img alt="" className="absolute left-0 max-w-none size-full top-0" src={imgUsdt} />
+                    <img alt="" className="absolute left-0 max-w-none size-full top-0" src={TRON_LOGO} />
                   </div>
                 </div>
                 <div className="content-stretch flex flex-col items-start relative shrink-0">
@@ -82,7 +80,7 @@ export function NetworkSelection({ selectedNetwork, onSelectNetwork, onContinue 
                 <div className="box-border content-stretch flex gap-[16px] items-center max-h-inherit px-[17px] py-[13px] relative w-full">
                   <div className="relative shrink-0 size-[40px]">
                     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                      <img alt="" className="absolute left-0 max-w-none size-full top-0" src={imgUsdt1} />
+                      <img alt="" className="absolute left-0 max-w-none size-full top-0" src={ETHEREUM_LOGO} />
                     </div>
                   </div>
                   <div className="content-stretch flex flex-col items-start relative shrink-0">
@@ -115,7 +113,7 @@ export function NetworkSelection({ selectedNetwork, onSelectNetwork, onContinue 
                 <div className="box-border content-stretch flex gap-[16px] items-center max-h-inherit px-[17px] py-[13px] relative w-full">
                   <div className="relative shrink-0 size-[40px]">
                     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                      <img alt="" className="absolute left-0 max-w-none size-full top-0" src={imgUsdt2} />
+                      <img alt="" className="absolute left-0 max-w-none size-full top-0" src={BSC_LOGO} />
                     </div>
                   </div>
                   <div className="content-stretch flex flex-col items-start relative shrink-0">

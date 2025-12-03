@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import svgPaths from "../imports/svg-snfg2a3vdu";
 import { imgGroup, imgGroup1 } from "../imports/svg-10z05";
+import { 
+  INJECTED_WALLET_ICON, 
+  METAMASK_LOGO, 
+  COINBASE_LOGO, 
+  BINANCE_WALLET_LOGO, 
+  TRUST_WALLET_LOGO, 
+  WALLETCONNECT_LOGO 
+} from '../assets/images';
 
 interface WalletConnectDialogProps {
   isOpen: boolean;
