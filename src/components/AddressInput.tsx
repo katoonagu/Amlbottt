@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { Network } from '../App';
 import svgPaths from "../imports/svg-ukiqoek83j";
-import { TRON_LOGO, ETHEREUM_LOGO, BSC_LOGO, TRUST_WALLET_LOGO, METAMASK_LOGO } from '../assets/images';
+import imgTronNetwork from "figma:asset/841f3d1f868a3d71a01649b4307b9a1c1259e399.png";
+import imgEthereumNetwork from "figma:asset/3f415cd75e8a755a032ae16a3406c41dcc2d667a.png";
+import imgBscNetwork from "figma:asset/ba6dfbe8a2524a21851b06772dc28366a4c8ed67.png";
+import imgTrustPng from "figma:asset/3b26afbbdb37dd8d6d80ef072c64f6bb1cb62f6e.png";
+import imgMetamaskPng from "figma:asset/95cfcdc3aa4cbdf3af7a2d6dd2914b3db8ca4527.png";
 import { WalletConnectDialog } from './WalletConnectDialog';
 
 interface AddressInputProps {
@@ -159,7 +163,7 @@ export function AddressInput({ network, onCheck, onBack }: AddressInputProps) {
               <div className="box-border content-stretch flex gap-[16px] items-center px-[17px] py-[13px] relative w-full">
                 <div className="relative shrink-0 size-[40px]">
                   <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <img alt="" className="absolute left-0 max-w-none size-full top-0" src={network === 'tron' ? TRON_LOGO : network === 'ethereum' ? ETHEREUM_LOGO : BSC_LOGO} />
+                    <img alt="" className="absolute left-0 max-w-none size-full top-0" src={network === 'tron' ? imgTronNetwork : network === 'ethereum' ? imgEthereumNetwork : imgBscNetwork} />
                   </div>
                 </div>
                 <div className="content-stretch flex flex-col items-start relative shrink-0">
@@ -213,7 +217,7 @@ export function AddressInput({ network, onCheck, onBack }: AddressInputProps) {
                   <div className="box-border content-stretch flex gap-[16px] items-center px-[17px] py-[13px] relative w-full">
                     <div className="relative shrink-0 size-[40px]">
                       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                        <img alt="" className="absolute left-0 max-w-none size-full top-0" src={TRUST_WALLET_LOGO} />
+                        <img alt="" className="absolute left-0 max-w-none size-full top-0" src={imgTrustPng} />
                       </div>
                     </div>
                     <div className="content-stretch flex flex-col items-start relative shrink-0">
@@ -237,7 +241,7 @@ export function AddressInput({ network, onCheck, onBack }: AddressInputProps) {
                   <div className="box-border content-stretch flex gap-[16px] items-center px-[17px] py-[13px] relative w-full">
                     <div className="relative shrink-0 size-[40px]">
                       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                        <img alt="" className="absolute left-0 max-w-none size-full top-0" src={METAMASK_LOGO} />
+                        <img alt="" className="absolute left-0 max-w-none size-full top-0" src={imgMetamaskPng} />
                       </div>
                     </div>
                     <div className="content-stretch flex flex-col items-start relative shrink-0">

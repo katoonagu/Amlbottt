@@ -8,7 +8,7 @@ import {
   BINANCE_WALLET_LOGO, 
   TRUST_WALLET_LOGO, 
   WALLETCONNECT_LOGO 
-} from '../assets/images';
+} from '../assets/images-hybrid';
 
 interface WalletConnectDialogProps {
   isOpen: boolean;
